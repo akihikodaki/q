@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -e
+ip link set "$1" up
+ip link set "$1" master br0

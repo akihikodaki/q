@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'socket'
+
+e_write = IO.new(ARGV[0].to_i)
+e_write.write '1'
+e_write.flush
+
+r_read = IO.new(ARGV[1].to_i)
+r_read.read 1
+r_read.close
+
+[
+  ['mount', '--bind', File.join(__dir__, '..', 'resolv.conf'), '/etc/resolv.conf'],
+  %w[ip link set tap_host up],
+  %w[ip link add br0 type bridge],
+  %w[ip link set tap_host master br0],
+  %w[ip link set br0 up],
+  %w[ip addr add 10.0.2.100/24 dev br0],
+  %w[ip route add default via 10.0.2.2]
+].each { Process.wait spawn(*_1) }
+
+clients = Array.new(16)
+server_path = File.join(__dir__, '..', 'var', 'sock')
+
+File.write File.join(__dir__, '..', 'var', 'pid'), Process.pid
+
+begin
+  File.delete server_path
+rescue Errno::ENOENT
+end
+
+UNIXServer.open(server_path) do |server|
+  loop do
+    acceptable = false
+    IO.select(clients.compact << server)[0].each do
+      if _1 == server
+        acceptable = true
+      else
+        _1.close
+        clients[clients.find_index(_1)] = nil
+      end
+    end
+
+    next unless acceptable
+
+    client = server.accept
+    index = clients.find_index(nil)
+    if index.nil?
+      client.close
+    else
+      client.write index.to_s.rjust(2, '0')
+      clients[index] = client
+    end
+  end
+end
