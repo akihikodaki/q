@@ -13,7 +13,7 @@ fork do
   Process.setpgid 0, 0
   e_read.read 1
 
-  exec 'slirp4netns', '-e', e_read.fileno.to_s, '-r', r_write.fileno.to_s,
+  exec 'slirp4netns', '-6e', e_read.fileno.to_s, '-r', r_write.fileno.to_s,
        parent.to_s, 'tap_host'
 end
 
