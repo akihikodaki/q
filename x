@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'etc'
 require 'socket'
 
 socket = UNIXSocket.new(File.join(__dir__, 'var', 'sock'))
@@ -13,5 +14,5 @@ exec(*%W[
   -device virtio-serial -device virtconsole,chardev=stdio
   -drive if=virtio,format=raw,file=#{__dir__}/var/root.img,file.locking=on
   -netdev tap,script=#{__dir__}/libexec/ifup,downscript=no,id=netdev
-  -nodefaults -nographic -m 8G -smp 8
+  -nodefaults -nographic -m 4G -smp #{Etc.nprocessors}
 ], *ARGV[1..])
