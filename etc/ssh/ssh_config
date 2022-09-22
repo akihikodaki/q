@@ -1,0 +1,3 @@
+IdentityFile /etc/ssh/id_ed25519
+User root
+UserKnownHostsFile ${Q}/var/ssh_known_hosts

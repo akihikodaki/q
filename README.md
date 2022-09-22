@@ -56,9 +56,10 @@ cd ltp
 ./build.sh -i
 sudo nmcli modify 'Ethernet 1' ipv6.addr-gen-mode 0
 sudo passwd --stdin root <<< password
-sudo ssh-keygen -t ed25519
-sudo cp /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
+sudo mkdir /root/.ssh
 sudo tee /root/.ssh/config <<< 'StrictHostKeyChecking no'
+sudo tee /root/.ssh/id_ed25519.pub <<< 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMXBrKSRDUiHhTAzGdqcWlny2XiPXEXA7U1WxsZWCZiI'
+sudo cp /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
 sudo cp /usr/lib/systemd/system/telnet.socket /etc/systemd/system/telnet-i.socket
 sudo cp /usr/lib/systemd/system/telnet@.service /etc/systemd/system/telnet-i@.service
 systemctl enable httpd rstatd rusersd sshd telnet-i.socket vsftpd
@@ -77,9 +78,17 @@ FTP hangs when logging in from remote without this change.
 
 10. On the guest, comment out `root` in `/etc/vsftpd/user_list`.
 
+11. On the host, open another terminal, run:
+
+```
+cd q
+./e scp etc/ssh/id_ed25519 10.0.2.15:.ssh
+```
+
 11. On the guest, run:
 
 ```
+sudo chmod -R go-rwx /root/.ssh
 systemctl poweroff
 ```
 

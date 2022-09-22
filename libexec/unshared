@@ -7,12 +7,16 @@ e_write = IO.new(ARGV[0].to_i)
 e_write.write '1'
 e_write.flush
 
+ssh = File.join(__dir__, '..', 'etc', 'ssh')
+File.chmod 0600, File.join(ssh, 'id_ed25519')
+
 r_read = IO.new(ARGV[1].to_i)
 r_read.read 1
 r_read.close
 
 [
-  ['mount', '--bind', File.join(__dir__, '..', 'resolv.conf'), '/etc/resolv.conf'],
+  ['mount', '--bind', File.join(__dir__, '..', 'etc', 'resolv.conf'), '/etc/resolv.conf'],
+  ['mount', '--bind', ssh, '/etc/ssh'],
   %w[ip link set tap_host up],
   %w[ip link add br0 type bridge],
   %w[ip link set tap_host master br0],
