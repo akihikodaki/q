@@ -23,7 +23,7 @@ r_read.close
   %w[ip link set br0 up],
   %w[ip addr add 10.0.2.100/24 dev br0],
   %w[ip route add default via 10.0.2.2]
-].each { Process.wait spawn(*_1) }
+].each { system(*_1, exception: true) }
 
 clients = Array.new(16)
 server_path = File.join(__dir__, '..', 'var', 'sock')
