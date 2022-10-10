@@ -17,6 +17,7 @@ r_read.close
 [
   ['mount', '--bind', File.join(__dir__, '..', 'etc', 'resolv.conf'), '/etc/resolv.conf'],
   ['mount', '--bind', ssh, '/etc/ssh'],
+  %w[ip link set lo up],
   %w[ip link set tap_host up],
   %w[ip link add br0 type bridge],
   %w[ip link set tap_host master br0],
