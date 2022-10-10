@@ -21,10 +21,15 @@ applications like FTP, HTTP, SSH, etc.
 git clone https://github.com/akihikodaki/q.git
 cd q
 mkdir var
-curl -LO https://download.fedoraproject.org/pub/fedora/linux/releases/36/Silverblue/aarch64/iso/Fedora-Silverblue-ostree-aarch64-36-1.5.iso
-git clone -b akihikodaki/igb_sriov_rebase https://github.com/daynix/qemu.git var/qemu
-make -C var/qemu
-var/qemu/build/qemu-img create root.img 64G
+cd var
+curl -LO https://download.fedoraproject.org/pub/fedora/linux/releases/36/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-36-1.5.iso
+git clone -b akihikodaki/igb_sriov_rebase https://github.com/daynix/qemu.git
+cd qemu
+./configure
+make
+cd ..
+qemu/build/qemu-img create root.img 64G
+cd ..
 ./d
 ```
 
