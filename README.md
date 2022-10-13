@@ -20,7 +20,7 @@ applications like FTP, HTTP, SSH, etc.
 ```sh
 git clone https://github.com/akihikodaki/q.git
 cd q
-mkdir var
+mkdir -p var/results
 cd var
 curl -LO https://download.fedoraproject.org/pub/fedora/linux/releases/36/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-36-1.5.iso
 git clone -b akihikodaki/igb_sriov_rebase https://github.com/daynix/qemu.git
@@ -42,7 +42,7 @@ cd q
 ./x virtio-net -cdrom Fedora-Silverblue-ostree-aarch64-36-1.5.iso
 ```
 
-Continue installing Fedora.
+Continue installing Fedora. Answer `person` if you asked for a username.
 
 5. On the guest, run:
 
@@ -60,6 +60,7 @@ git clone https://github.com/akihikodaki/ltp.git -b aki
 cd ltp
 ./build.sh -i
 sudo nmcli modify 'Ethernet 1' ipv6.addr-gen-mode 0
+sudo nmcli modify 'Ethernet 1' connection.multi-connect 8
 sudo passwd --stdin root <<< password
 sudo mkdir /root/.ssh
 sudo tee /root/.ssh/config <<< 'StrictHostKeyChecking no'
@@ -106,9 +107,6 @@ cd q
 ./x virtio-net -snapshot
 ```
 
-2. On the first guest, run:
+The first guest will be the test subject.
 
-```
-cd ltp-install/testscripts
-sudo IPV4_LHOST=10.0.2.15/24 IPV4_RHOST=10.0.2.16/24 IPV6_LHOST=fd00::ff:fe00:0/64 IPV6_RHOST=fd00::ff:fe00:1/64 LHOST_IFACES=enp0s1 PASSWD=password RHOST=10.0.2.16 RHOST_IFACES=enp0s1 ./network.sh -6mrta
-```
+2. Run `./t`
