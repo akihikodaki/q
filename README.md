@@ -66,16 +66,12 @@ sudo mkdir /root/.ssh
 sudo tee /root/.ssh/config <<< 'StrictHostKeyChecking no'
 sudo tee /root/.ssh/id_ed25519.pub <<< 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMXBrKSRDUiHhTAzGdqcWlny2XiPXEXA7U1WxsZWCZiI'
 sudo cp /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
-sudo cp /usr/lib/systemd/system/telnet.socket /etc/systemd/system/telnet-i.socket
-sudo cp /usr/lib/systemd/system/telnet@.service /etc/systemd/system/telnet-i@.service
-systemctl enable httpd rstatd rusersd sshd telnet-i.socket vsftpd
+sudo mkdir /etc/systemd/system/telnet@.service.d
+sudo tee /etc/systemd/system/telnet@.service.d/override.conf <<< 'ExecStart=-/usr/sbin/in.telnetd -i'
+systemctl enable httpd rstatd rusersd sshd telnet.socket vsftpd
 ```
 
-7. Append ` -i` to `ExecStart` in `/etc/systemd/system/telnet-i@.service`.
-
-telnet hangs when connecting from remote without this change.
-
-8. On the guest, comment out `listen=NO` and `listen_ipv6=YES` in
+7. On the guest, comment out `listen=NO` and `listen_ipv6=YES` in
    `/etc/vsftpd/vsftpd.conf`.
 
 FTP hangs when logging in from remote without this change.
