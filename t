@@ -41,18 +41,21 @@ end
   ['fd00::ff:fe00:1', [helper]]
 ].each do
   host, interfaces = _1
-  stdout = IO.popen([e, 'ssh', host, *%W[ip -json address show]], &:read)
-  JSON.parse(stdout).each do |address|
-    interfaces.each do |interface|
-      next if interface.ifname != address['ifname']
+  while interfaces.any? { |interface| interface.inet.nil? || interface.inet6.nil? }
+    sleep 1
+    stdout = IO.popen([e, 'ssh', host, *%W[ip -json address show]], &:read)
+    JSON.parse(stdout).each do |address|
+      interfaces.each do |interface|
+        next if interface.ifname != address['ifname']
 
-      address['addr_info'].each do |info|
-        case info['family']
-        when 'inet'
-          interface.inet = Address.new(info['local'], info['prefixlen'].to_s)
-        when 'inet6'
-          if info['scope'] == 'global'
-            interface.inet6 = Address.new(info['local'], info['prefixlen'].to_s)
+        address['addr_info'].each do |info|
+          case info['family']
+          when 'inet'
+            interface.inet = Address.new(info['local'], info['prefixlen'].to_s)
+          when 'inet6'
+            if info['scope'] == 'global'
+              interface.inet6 = Address.new(info['local'], info['prefixlen'].to_s)
+            end
           end
         end
       end
