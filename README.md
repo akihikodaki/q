@@ -67,7 +67,10 @@ sudo tee /root/.ssh/config <<< 'StrictHostKeyChecking no'
 sudo tee /root/.ssh/id_ed25519.pub <<< 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMXBrKSRDUiHhTAzGdqcWlny2XiPXEXA7U1WxsZWCZiI'
 sudo cp /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
 sudo mkdir /etc/systemd/system/telnet@.service.d
-sudo tee /etc/systemd/system/telnet@.service.d/override.conf <<< 'ExecStart=-/usr/sbin/in.telnetd -i'
+sudo tee /etc/systemd/system/telnet@.service.d/override.conf <<EOF
+[Service]
+ExecStart=-/usr/sbin/in.telnetd -i
+EOF
 systemctl disable chronyd
 systemctl enable httpd rstatd rusersd sshd telnet.socket vsftpd
 ```
