@@ -26,6 +26,8 @@ unless subjectvfs.nil?
     system e, *%W[ssh fd00::ff:fe00:0 tee /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs], exception: true, in: file, out: :close
   end
 
+  system e, *%W[ssh fd00::ff:fe00:0 sysctl net.ipv4.conf.all.accept_local=1], exception: true
+
   subjectvfs.each do |vf|
     begin
       system e, *%W[ssh fd00::ff:fe00:0 nmcli device connect #{vf.ifname}], exception: true
