@@ -69,6 +69,7 @@ sudo cp /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
 sudo mkdir /etc/systemd/system/telnet@.service.d
 sudo tee /etc/systemd/system/telnet@.service.d/override.conf <<EOF
 [Service]
+ExecStart=
 ExecStart=-/usr/sbin/in.telnetd -i
 EOF
 systemctl disable chronyd
