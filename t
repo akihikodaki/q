@@ -29,14 +29,16 @@ unless subjectvfs.nil?
     system e, *%w[ssh fd00::ff:fe00:0 tee /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs], exception: true, in: file, out: :close
   end
 
-  begin
-    system e, *%w[ssh fd00::ff:fe00:0 ip rule del priority 0 table local], exception: true
-  rescue RuntimeError
-  end
+  %w[-4 -6].each do
+    begin
+      system e, *%W[ssh fd00::ff:fe00:0 ip #{_1} rule del priority 0 table local], exception: true
+    rescue RuntimeError
+    end
 
-  begin
-    system e, *%w[ssh fd00::ff:fe00:0 ip rule add priority 1 table local], exception: true
-  rescue RuntimeError
+    begin
+      system e, *%W[ssh fd00::ff:fe00:0 ip #{_1} rule add priority 1 table local], exception: true
+    rescue RuntimeError
+    end
   end
 end
 
@@ -66,8 +68,11 @@ end
   end
 end
 
-[subject, *subjectvfs].each do
-  system e, *%W[ssh fd00::ff:fe00:0 ip rule add to #{_1.inet} iif lo priority 0 table main], exception: true
+[subject, *subjectvfs].each do |interface|
+  [['-4', interface.inet], ['-6', interface.inet6]].each do |inet|
+    version, address = inet
+    system e, *%W[ssh fd00::ff:fe00:0 ip #{version} rule add to #{address} iif lo priority 0 table main], exception: true
+  end
 rescue RuntimeError
 end
 
@@ -90,12 +95,14 @@ cases.each do
   path, local, remote = _1
 
   [local, remote].permutation do |interfaces|
-    begin
-      system e, 'ssh', interfaces[0].host, 'ip', 'route', 'del', remote.inet, exception: true
-    rescue RuntimeError
-    end
+    [interfaces.map(&:inet), interfaces.map(&:inet6)].each do |inets|
+      begin
+        system e, 'ssh', interfaces[0].host, 'ip', 'route', 'del', inets[1], exception: true
+      rescue RuntimeError
+      end
 
-    system e, 'ssh', interfaces[0].host, 'ip', 'route', 'add', remote.inet, 'dev', interfaces[0].ifname, exception: true
+      system e, 'ssh', interfaces[0].host, 'ip', 'route', 'add', inets[1], 'dev', interfaces[0].ifname, 'src', inets[0], exception: true
+    end
   end
 
   File.open File.join(results, path), File::CREAT | File::WRONLY do |file|
