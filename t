@@ -4,37 +4,39 @@
 require 'json'
 require 'tmpdir'
 
-Address = Struct.new(:local, :prefixlen)
-Interface = Struct.new(:ifname, :inet, :inet6)
+Interface = Struct.new(:ifname, :host, :inet, :inet6)
 e = File.join(__dir__, 'e')
 test = File.join(__dir__, 'libexec', 'test.sh')
 results = File.join(__dir__, 'var', 'results', Time.now.to_s)
-subject = Interface.new('enp0s2', nil, nil)
-subjectvfs = %w[enp0s2v0 enp0s2v1].map { Interface.new(_1, nil, nil) }
-helper = Interface.new('enp0s2', nil, nil)
+subject = Interface.new('enp0s2')
+subjectvfs = %w[enp0s2v0 enp0s2v1].map { Interface.new(_1) }
+helper = Interface.new('enp0s2')
 
 begin
-  system e, *%W[ssh fd00::ff:fe00:0 test -f /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs], exception: true
+  system e, *%w[ssh fd00::ff:fe00:0 test -f /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs], exception: true
 rescue RuntimeError
   subjectvfs = nil
 end
 
 unless subjectvfs.nil?
   File.open Dir.tmpdir, File::RDWR | File::TMPFILE do |file|
+    file.write '0'
+    file.rewind
+    system e, *%w[ssh fd00::ff:fe00:0 tee /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs], exception: true, in: file, out: :close
+    file.rewind
     file.write subjectvfs.size.to_s
     file.rewind
-    system e, *%W[ssh fd00::ff:fe00:0 tee /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs], exception: true, in: file, out: :close
+    system e, *%w[ssh fd00::ff:fe00:0 tee /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs], exception: true, in: file, out: :close
   end
 
-  system e, *%W[ssh fd00::ff:fe00:0 sysctl net.ipv4.conf.all.accept_local=1], exception: true
+  begin
+    system e, *%w[ssh fd00::ff:fe00:0 ip rule del priority 0 table local], exception: true
+  rescue RuntimeError
+  end
 
-  subjectvfs.each do |vf|
-    begin
-      system e, *%W[ssh fd00::ff:fe00:0 nmcli device connect #{vf.ifname}], exception: true
-    rescue RuntimeError
-      sleep 1
-      retry
-    end
+  begin
+    system e, *%w[ssh fd00::ff:fe00:0 ip rule add priority 1 table local], exception: true
+  rescue RuntimeError
   end
 end
 
@@ -43,6 +45,7 @@ end
   ['fd00::ff:fe00:1', [helper]]
 ].each do
   host, interfaces = _1
+  interfaces.each { |interface| interface.host = host }
   while interfaces.any? { |interface| interface.inet.nil? || interface.inet6.nil? }
     sleep 1
     stdout = IO.popen([e, 'ssh', host, *%W[ip -json address show]], &:read)
@@ -53,16 +56,19 @@ end
         address['addr_info'].each do |info|
           case info['family']
           when 'inet'
-            interface.inet = Address.new(info['local'], info['prefixlen'].to_s)
+            interface.inet = info['local']
           when 'inet6'
-            if info['scope'] == 'global'
-              interface.inet6 = Address.new(info['local'], info['prefixlen'].to_s)
-            end
+            interface.inet6 = info['local'] if info['scope'] == 'global'
           end
         end
       end
     end
   end
+end
+
+[subject, *subjectvfs].each do
+  system e, *%W[ssh fd00::ff:fe00:0 ip rule add to #{_1.inet} iif lo priority 0 table main], exception: true
+rescue RuntimeError
 end
 
 if subjectvfs.nil?
@@ -82,13 +88,21 @@ buffer = String.new
 
 cases.each do
   path, local, remote = _1
+
+  [local, remote].permutation do |interfaces|
+    begin
+      system e, 'ssh', interfaces[0].host, 'ip', 'route', 'del', remote.inet, exception: true
+    rescue RuntimeError
+    end
+
+    system e, 'ssh', interfaces[0].host, 'ip', 'route', 'add', remote.inet, 'dev', interfaces[0].ifname, exception: true
+  end
+
   File.open File.join(results, path), File::CREAT | File::WRONLY do |file|
     command = [
-      e, *%W[ssh fd00::ff:fe00:0 sh -s --],
-      local.ifname, local.inet.local, local.inet.prefixlen,
-      local.inet6.local, local.inet6.prefixlen,
-      remote.ifname, remote.inet.local, remote.inet.prefixlen,
-      remote.inet6.local, remote.inet6.prefixlen
+      e, *%w[ssh fd00::ff:fe00:0 sh -s --],
+      local.ifname, local.inet, local.inet6,
+      remote.ifname, remote.inet, remote.inet6
     ]
 
     IO.popen command, in: test do |io|
