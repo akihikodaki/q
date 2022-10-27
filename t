@@ -157,11 +157,13 @@ threads = cases.map do
             end
           end
         end
+      end
 
-        host.interfaces.each do |interface|
+      unless seperate_hosts
+        [local, remote].each do |interface|
           [['-4', interface.inet], ['-6', interface.inet6]].each do |inet|
             version, address = inet
-            daemon.system *%W[ssh #{host.address} ip #{version} rule add to #{address} iif lo priority 0 table main],
+            daemon.system *%W[ssh #{interface.host.address} ip #{version} rule add to #{address} iif lo priority 0 table main],
                           exception: true
           end
         end
