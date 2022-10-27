@@ -111,3 +111,15 @@ cd q
 The first guest will be the test subject.
 
 2. Run `./t`
+
+## Notes on t
+
+### Not running RPC tests
+
+RPC tests are excluded because it was found they are not working properly. See:
+https://github.com/linux-test-project/ltp/issues/621
+
+## clockdiff error with igb loopback
+
+It is likely to be a bug of clockdiff fixed with:
+https://github.com/iputils/iputils/pull/380
