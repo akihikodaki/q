@@ -27,9 +27,7 @@ r_read.close
 ].each { system(*_1, exception: true) }
 
 clients = Array.new(16)
-server_path = File.join(__dir__, '..', 'var', 'sock')
-
-File.write File.join(__dir__, '..', 'var', 'pid'), Process.pid
+server_path = File.join(__dir__, '..', 'var', 'sock', Process.pid.to_s)
 
 begin
   File.delete server_path
@@ -37,6 +35,8 @@ rescue Errno::ENOENT
 end
 
 UNIXServer.open(server_path) do |server|
+  IO.new(ARGV[2].to_i).close unless ARGV[2].nil?
+
   loop do
     acceptable = false
     IO.select(clients.compact << server)[0].each do
@@ -59,4 +59,6 @@ UNIXServer.open(server_path) do |server|
       clients[index] = client
     end
   end
+ensure
+  File.delete server_path
 end

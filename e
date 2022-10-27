@@ -1,9 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-ENV['Q'] = __dir__
+require File.join(__dir__, 'lib')
 
-exec(*%W[
-  nsenter -t #{File.read(File.join(__dir__, 'var', 'pid'))}
-  -m -n -U --preserve-credentials -w#{Dir.pwd}
-], *ARGV)
+q = Q.new
+q.enter(*q.argv)

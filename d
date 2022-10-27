@@ -8,6 +8,7 @@ r_write.close_on_exec = false
 parent = Process.pid
 
 fork do
+  IO.new(ARGV[0].to_i).close unless ARGV[0].nil?
   e_write.close
   r_read.close
   Process.setpgid 0, 0
@@ -24,4 +25,4 @@ r_read.close_on_exec = false
 
 exec 'unshare', '--user', '--map-root-user', '--net', '--mount',
      File.join(__dir__, 'libexec/unshared'),
-     e_write.fileno.to_s, r_read.fileno.to_s
+     e_write.fileno.to_s, r_read.fileno.to_s, *ARGV
