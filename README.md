@@ -22,7 +22,7 @@ git clone https://github.com/akihikodaki/q.git
 cd q
 mkdir -p var/results
 cd var
-curl -LO https://download.fedoraproject.org/pub/fedora/linux/releases/36/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-36-1.5.iso
+curl -LO https://download.fedoraproject.org/pub/fedora/linux/releases/37/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-37-1.7.iso
 git clone -b akihikodaki/igb_sriov_rebase https://github.com/daynix/qemu.git
 cd qemu
 ./configure
@@ -39,7 +39,7 @@ The last `./d` runs the server program that provides a network environment.
 
 ```sh
 cd q
-./x virtio-net -cdrom Fedora-Silverblue-ostree-aarch64-36-1.5.iso
+./x virtio-net -cdrom Fedora-Silverblue-ostree-x86_64-37-1.7.iso
 ```
 
 Continue installing Fedora. Answer `person` if you asked for a username.
@@ -56,7 +56,7 @@ This reboots the guest.
 6. On the guest, run:
 
 ```sh
-git clone https://github.com/akihikodaki/ltp.git -b aki
+git clone https://github.com/linux-test-project/ltp.git -b 6246d1d067a505cf4889449cb83b4732111f8cc1
 cd ltp
 ./build.sh -i
 sudo nmcli modify 'Ethernet 1' ipv6.addr-gen-mode 0
