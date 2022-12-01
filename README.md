@@ -39,7 +39,7 @@ The last `./d` runs the server program that provides a network environment.
 
 ```sh
 cd q
-./x virtio-net -cdrom Fedora-Silverblue-ostree-x86_64-37-1.7.iso
+./x virtio-net -cdrom var/Fedora-Silverblue-ostree-x86_64-37-1.7.iso
 ```
 
 Continue installing Fedora. Answer `person` if you asked for a username.
