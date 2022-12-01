@@ -44,7 +44,7 @@ class Daemon
 end
 
 class Host
-  attr_reader :address, :interfaces
+  attr_reader :address, :interfaces, :ifname
 
   X = File.join(__dir__, 'x')
 
@@ -61,6 +61,10 @@ class Host
         sleep 1
         retry
       end
+
+      stdout = daemon.popen(['ssh', address, *%W[ip -json address show]], &:read)
+      interface = JSON.parse(stdout).find { _1['addr_info'].any? { |info| info['local'] == address } }
+      @ifname = interface['ifname']
     rescue Exception
       kill
       raise
@@ -73,27 +77,27 @@ class Host
   end
 end
 
-Interface = Struct.new(:ifname, :host, :inet, :inet6)
+Interface = Struct.new(:ifname_suffix, :host, :inet, :inet6)
 
 cases = if ARGV[0] == 'igb'
           [
-            ['subject-helper', true, 0, 'enp0s2', 'enp0s2'],
-            ['subject-subjectv0', false, 1, 'enp0s2', 'enp0s2v0'],
-            ['subjectv0-helper', true, 1, 'enp0s2v0', 'enp0s2'],
-            ['subjectv0-subject', false, 1, 'enp0s2v0', 'enp0s2'],
-            ['subjectv0-subjectv1', false, 2, 'enp0s2v0', 'enp0s2v1']
+            ['subject-helper', true, 0, '', ''],
+            ['subject-subjectv0', false, 1, '', 'v0'],
+            ['subjectv0-helper', true, 1, 'v0', ''],
+            ['subjectv0-subject', false, 1, 'v0', ''],
+            ['subjectv0-subjectv1', false, 2, 'v0', 'v1']
           ]
         else
-          cases = [['subject-helper', true, 0, 'enp0s2', 'enp0s2']]
+          cases = [['subject-helper', true, 0, '', '']]
         end
 
 results = File.join(__dir__, 'var', 'results', Time.now.to_s)
 Dir.mkdir results
 
 threads = cases.map do
-  Thread.new(*_1) do |name, seperate_hosts, required_vfs, local_ifname, remote_ifname|
-    local = Interface.new(local_ifname)
-    remote = Interface.new(remote_ifname)
+  Thread.new(*_1) do |name, seperate_hosts, required_vfs, local_ifname_suffix, remote_ifname_suffix|
+    local = Interface.new(local_ifname_suffix)
+    remote = Interface.new(remote_ifname_suffix)
     hosts = []
     path = File.join(results, name)
     hosts_path = File.join(path, 'hosts')
@@ -118,12 +122,12 @@ threads = cases.map do
         File.open Dir.tmpdir, File::RDWR | File::TMPFILE do |file|
           file.write '0'
           file.rewind
-          daemon.system *%w[ssh fd00::ff:fe00:0 tee /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs],
+          daemon.system *%W[ssh fd00::ff:fe00:0 tee /sys/class/net/#{local.host.ifname}/device/sriov_numvfs],
                         exception: true, in: file, out: :close
           file.rewind
           file.write required_vfs.to_s
           file.rewind
-          daemon.system *%w[ssh fd00::ff:fe00:0 tee /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs],
+          daemon.system *%W[ssh fd00::ff:fe00:0 tee /sys/class/net/#{local.host.ifname}/device/sriov_numvfs],
                         exception: true, in: file, out: :close
         end
       end
@@ -144,7 +148,7 @@ threads = cases.map do
           stdout = daemon.popen(['ssh', host.address, *%W[ip -json address show]], &:read)
           JSON.parse(stdout).each do |address|
             host.interfaces.each do |interface|
-              next if interface.ifname != address['ifname']
+              next if host.ifname + interface.ifname_suffix != address['ifname']
 
               address['addr_info'].each do |info|
                 case info['family']
@@ -171,7 +175,8 @@ threads = cases.map do
 
       [local, remote].permutation do |interfaces|
         [interfaces.map(&:inet), interfaces.map(&:inet6)].each do |inets|
-          daemon.system 'ssh', interfaces[0].host.address, 'ip', 'route', 'add', inets[1], 'dev', interfaces[0].ifname, 'src', inets[0],
+          ifname = interfaces[0].host.ifname + interfaces[0].ifname_suffix
+          daemon.system 'ssh', interfaces[0].host.address, 'ip', 'route', 'add', inets[1], 'dev', ifname, 'src', inets[0],
                         exception: true
         end
       end
