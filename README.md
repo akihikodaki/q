@@ -70,7 +70,7 @@ ExecStart=
 ExecStart=-/usr/sbin/in.telnetd -i
 EOF
 sudo tee /root/.bashrc.d/ltp <<< 'PATH="$PATH:/home/person/ltp-install/testcases/bin"'
-systemctl disable chronyd
+systemctl disable chronyd firewalld
 systemctl enable --now httpd rstatd rusersd sshd telnet.socket vsftpd
 ```
 
