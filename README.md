@@ -56,24 +56,22 @@ This reboots the guest.
 6. On the guest, run:
 
 ```sh
-git clone https://github.com/linux-test-project/ltp.git -b 6246d1d067a505cf4889449cb83b4732111f8cc1
+git clone https://github.com/linux-test-project/ltp.git -b c1f0cfd71e4eeeaa40d5f2c1f15cd5cb40f9fa61
 cd ltp
 ./build.sh -i
-sudo nmcli modify 'Ethernet 1' ipv6.addr-gen-mode 0
-sudo nmcli modify 'Ethernet 1' connection.multi-connect 8
 sudo passwd --stdin root <<< password
-sudo mkdir /root/.ssh
+sudo mkdir /root/.bashrc.d /root/.ssh /etc/systemd/system/telnet@.service.d
 sudo tee /root/.ssh/config <<< 'StrictHostKeyChecking no'
 sudo tee /root/.ssh/id_ed25519.pub <<< 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMXBrKSRDUiHhTAzGdqcWlny2XiPXEXA7U1WxsZWCZiI'
 sudo cp /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
-sudo mkdir /etc/systemd/system/telnet@.service.d
 sudo tee /etc/systemd/system/telnet@.service.d/override.conf <<EOF
 [Service]
 ExecStart=
 ExecStart=-/usr/sbin/in.telnetd -i
 EOF
+sudo tee /root/.bashrc.d/ltp <<< 'PATH="$PATH:/home/person/ltp-install/testcases/bin"'
 systemctl disable chronyd
-systemctl enable httpd rstatd rusersd sshd telnet.socket vsftpd
+systemctl enable --now httpd rstatd rusersd sshd telnet.socket vsftpd
 ```
 
 7. On the guest, comment out `listen=NO` and `listen_ipv6=YES` in
@@ -101,16 +99,7 @@ systemctl poweroff
 
 ## Running
 
-1. Open two terminals and run the following for each:
-
-```
-cd q
-./x virtio-net -snapshot
-```
-
-The first guest will be the test subject.
-
-2. Run `./t`
+Run `./t igb`
 
 ## Notes on t
 
