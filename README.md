@@ -23,7 +23,7 @@ cd q
 mkdir -p var/results
 cd var
 curl -LO https://download.fedoraproject.org/pub/fedora/linux/releases/37/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-37-1.7.iso
-git clone -b akihikodaki/igb_sriov_rebase https://github.com/daynix/qemu.git
+git clone -b akihikodaki/igb_sriov_rebase6 https://github.com/daynix/qemu.git
 cd qemu
 ./configure
 make
@@ -56,7 +56,7 @@ This reboots the guest.
 6. On the guest, run:
 
 ```sh
-git clone https://github.com/linux-test-project/ltp.git -b c1f0cfd71e4eeeaa40d5f2c1f15cd5cb40f9fa61
+git clone https://github.com/akihikodaki/ltp.git -b aki
 cd ltp
 ./build.sh -i
 sudo passwd --stdin root <<< password
