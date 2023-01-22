@@ -56,7 +56,7 @@ class Host
                  pgroup: 0)
     begin
       begin
-        daemon.system 'ssh', address, exception: true, in: :close
+        daemon.system 'ssh', '-o', 'ConnectTimeout=1', address, exception: true, in: :close
       rescue RuntimeError
         sleep 1
         retry
