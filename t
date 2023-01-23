@@ -27,7 +27,7 @@ class Daemon
 
   def kill
     Process.kill 'TERM', @pid
-    Process.wait
+    Process.wait @pid
   end
 
   def popen(command, ...)
