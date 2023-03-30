@@ -5,7 +5,6 @@ require 'etc'
 require File.join(__dir__, 'lib')
 
 log = nil
-nprocessors = Etc.nprocessors.to_s
 q = Q.new do |parser|
   parser.on('-l', '--log [PATH]', String, 'log to file') { log = _1 }
 end
@@ -39,8 +38,28 @@ socket.close_on_exec = false
 
 q.enter(File.join(qemu, 'build', executable), *base, *chardev, *%W[
   -mon chardev=chardev
-  -device #{q.argv[0]},mac=02:00:00:00:00:#{socket.read(2)},netdev=netdev
+  -device virtio-iommu
+  -device virtio-net,mac=02:00:00:00:00:#{socket.read(2)},netdev=tap
+  -device virtio-net,mac=02:00:00:01:00:00,netdev=hub0port0
+  -device #{q.argv[0]},mac=02:00:00:01:00:01,netdev=hub0port1
+  -device virtio-net,mac=02:00:00:01:01:00,netdev=hub1port0
+  -device #{q.argv[0]},mac=02:00:00:01:01:01,netdev=hub1port1
+  -device virtio-net,mac=02:00:00:01:02:00,netdev=hub2port0
+  -device #{q.argv[0]},mac=02:00:00:01:02:01,netdev=hub2port1
+  -device virtio-net,mac=02:00:00:01:03:00,netdev=hub3port0
+  -device #{q.argv[0]},mac=02:00:00:01:03:01,netdev=hub3port1
   -drive if=virtio,format=raw,file=#{q.var}/root.img,file.locking=on
-  -netdev tap,script=#{q.libexec}/ifup,downscript=no,id=netdev
-  -nodefaults -nographic -m 1G -smp #{nprocessors}
+  -netdev tap,script=#{q.libexec}/ifup,downscript=no,id=tap
+  -netdev hubport,id=hub0port0,hubid=0 -netdev hubport,id=hub0port1,hubid=0
+  -netdev hubport,id=hub1port0,hubid=1 -netdev hubport,id=hub1port1,hubid=1
+  -netdev hubport,id=hub2port0,hubid=2 -netdev hubport,id=hub2port1,hubid=2
+  -netdev hubport,id=hub3port0,hubid=3 -netdev hubport,id=hub3port1,hubid=3
+  -numa node,memdev=ram0 -object memory-backend-ram,size=4G,id=ram0
+  -numa node,memdev=ram1 -object memory-backend-ram,size=4G,id=ram1
+  -numa cpu,node-id=0,socket-id=0 -numa cpu,node-id=1,socket-id=1
+  -nodefaults -nographic -m 8G -smp #{[Etc.nprocessors, 18].max},sockets=2
 ], *q.argv[1..])
+
+#--append #{'root=UUID=8a6658fc-e0da-4185-9c26-21e39c7399a0 rootflags=subvol=root rw ostree=/ostree/boot.0/fedora/c79b4d947f737da0ad9cc97f10de4ebf90e806467964ce8430a986e3cc9fec35/0'}
+#-kernel #{q.var}/kernel-ark/arch/arm64/boot/Image
+#-initrd #{q.var}/initramfs-6.1.6-200.fc37.aarch64.img

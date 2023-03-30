@@ -2,14 +2,17 @@
 
 Q is a quick playground for QEMU instances with a network bridge.
 
-## Linux Test Project
+## Linux Test Project and DPDK Test Suite
 
 The LTP is designed to test the kernel, but it can also reveal bugs in network
 device implementations of QEMU by utilizing several network features like
 ICMP, TCP, UDP, multicast, etc, and by stressing the device with real-world
 applications like FTP, HTTP, SSH, etc.
 
-## Setting up
+DPDK Test Suite tests DPDK. As DPDK exercises many hardware features, it can
+cover wide features.
+
+### Setting up
 
 1. Set up GNU/Linux.
 
@@ -48,7 +51,7 @@ Continue installing Fedora. Answer `person` if you asked for a username.
 
 ```sh
 rpm-ostree upgrade
-rpm-ostree install -r automake bind dhcp-server expect ftp gcc iproute-tc make net-tools rusers rusers-server tcpdump telnet telnet-server traceroute vsftpd
+rpm-ostree install -r automake bind dhcp-server expect ftp gcc iproute-tc kernel-devel libcap-ng-devel libpcap-devel make net-tools python3-devel python3-pip rusers rusers-server tcpdump telnet telnet-server traceroute vsftpd
 ```
 
 This reboots the guest.
@@ -56,9 +59,13 @@ This reboots the guest.
 6. On the guest, run:
 
 ```sh
+git clone https://github.com/akihikodaki/dts.git
 git clone https://github.com/akihikodaki/ltp.git -b aki
 cd ltp
 ./build.sh -i
+cd ..
+cd dts
+sudo pip install
 sudo passwd --stdin root <<< password
 sudo mkdir /root/.bashrc.d /root/.ssh /etc/systemd/system/telnet@.service.d
 sudo tee /root/.ssh/config <<< 'StrictHostKeyChecking no'
@@ -70,6 +77,10 @@ ExecStart=
 ExecStart=-/usr/sbin/in.telnetd -i
 EOF
 sudo tee /root/.bashrc.d/ltp <<< 'PATH="$PATH:/home/person/ltp-install/testcases/bin"'
+sudo tee /etc/NetworkManager/conf.d/99-unmanaged-devices.conf <<EOF
+[keyfile]
+unmanaged-devices=interface-name:enp0s3;interface-name:enp0s4;interface-name:enp0s5;interface-name:enp0s6;interface-name:enp0s7;interface-name:enp0s8;interface-name:enp0s9;interface-name:enp0s10
+EOF
 systemctl disable chronyd firewalld
 systemctl enable --now httpd rstatd rusersd sshd telnet.socket vsftpd
 ```
@@ -97,18 +108,18 @@ sudo chmod -R go-rwx /root/.ssh
 systemctl poweroff
 ```
 
-## Running
+### Running
 
 Run `./t igb`
 
-## Notes on t
+### Notes on t
 
-### Not running RPC tests
+#### Not running RPC tests
 
 RPC tests are excluded because it was found they are not working properly. See:
 https://github.com/linux-test-project/ltp/issues/621
 
-## clockdiff error with igb loopback
+### clockdiff error with igb loopback
 
 It is likely to be a bug of clockdiff fixed with:
 https://github.com/iputils/iputils/pull/380
