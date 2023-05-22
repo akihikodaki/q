@@ -59,7 +59,3 @@ q.enter(File.join(qemu, 'build', executable), *base, *chardev, *%W[
   -numa cpu,node-id=0,socket-id=0 -numa cpu,node-id=1,socket-id=1
   -nodefaults -nographic -m 8G -smp #{[Etc.nprocessors, 18].max},sockets=2
 ], *q.argv[1..])
-
-#--append #{'root=UUID=8a6658fc-e0da-4185-9c26-21e39c7399a0 rootflags=subvol=root rw ostree=/ostree/boot.0/fedora/c79b4d947f737da0ad9cc97f10de4ebf90e806467964ce8430a986e3cc9fec35/0'}
-#-kernel #{q.var}/kernel-ark/arch/arm64/boot/Image
-#-initrd #{q.var}/initramfs-6.1.6-200.fc37.aarch64.img
