@@ -25,7 +25,7 @@ git clone https://github.com/akihikodaki/q.git
 cd q
 mkdir -p var/results
 cd var
-curl -LO https://download.fedoraproject.org/pub/fedora/linux/releases/37/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-37-1.7.iso
+curl -LO https://download.fedoraproject.org/pub/fedora/linux/releases/38/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-38-1.6.iso
 git clone -b akihikodaki/igb_sriov_rebase6 https://github.com/daynix/qemu.git
 cd qemu
 ./configure
@@ -42,7 +42,7 @@ The last `./d` runs the server program that provides a network environment.
 
 ```sh
 cd q
-./x virtio-net -cdrom var/Fedora-Silverblue-ostree-x86_64-37-1.7.iso
+./x virtio-net -cdrom var/Fedora-Silverblue-ostree-x86_64-38-1.6.iso
 ```
 
 Continue installing Fedora. Answer `person` if you asked for a username.
