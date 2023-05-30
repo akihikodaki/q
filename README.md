@@ -60,7 +60,7 @@ This reboots the guest.
 
 ```sh
 git clone https://github.com/akihikodaki/dts.git
-git clone https://github.com/akihikodaki/ltp.git -b aki
+git clone https://github.com/linux-test-project/ltp.git -b 20230516
 cd ltp
 ./build.sh -i
 cd ..
