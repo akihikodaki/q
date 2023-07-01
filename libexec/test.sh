@@ -25,7 +25,7 @@ ip route del fd00:1:1:1::1
 ip route add 10.0.0.2 dev "$3"
 ip route add fd00:1:1:1::1 dev "$2"
 ip route add fd00:1:1:1::2 dev "$3"
-ip link set enp0s4 up
+ip link set ens2 up
 for suffix in 1 2
 do
   until ping -6 -c 1 "fd00:1:1:1::$suffix"

@@ -79,7 +79,7 @@ EOF
 sudo tee /root/.bashrc.d/ltp <<< 'PATH="$PATH:/home/person/ltp-install/testcases/bin"'
 sudo tee /etc/NetworkManager/conf.d/99-unmanaged-devices.conf <<EOF
 [keyfile]
-unmanaged-devices=interface-name:enp0s3;interface-name:enp0s4;interface-name:enp0s5;interface-name:enp0s6;interface-name:enp0s7;interface-name:enp0s8;interface-name:enp0s9;interface-name:enp0s10
+unmanaged-devices=interface-name:ens1;interface-name:ens2;interface-name:ens3;interface-name:ens4;interface-name:ens5;interface-name:ens6;interface-name:ens7;interface-name:ens8
 EOF
 systemctl disable chronyd firewalld
 systemctl enable --now httpd rstatd rusersd sshd telnet.socket vsftpd
