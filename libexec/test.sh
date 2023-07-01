@@ -2,7 +2,7 @@
 
 set -eux
 cd /home/person/ltp-install/testscripts
-[ "$1" -eq 0 ] || echo "$1" > /sys/class/net/enp0s4/device/sriov_numvfs
+[ "$1" -eq 0 ] || echo "$1" > /sys/class/net/ens2/device/sriov_numvfs
 ip -4 rule del priority 0 table local
 ip -4 rule add priority 1 table local
 ip -4 rule add to 10.0.0.1 iif lo priority 0 table main

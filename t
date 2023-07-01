@@ -66,14 +66,14 @@ end
 
 cases = if ARGV[0] == 'igb'
           [
-            ['subject-helper', 0, 'enp0s4', 'enp0s3'],
-            ['subject-subjectv0', 1, 'enp0s4', 'enp0s4v0'],
-            ['subjectv0-helper', 1, 'enp0s4v0', 'enp0s3'],
-            ['subjectv0-subject', 1, 'enp0s4v0', 'enp0s4'],
-            ['subjectv0-subjectv1', 2, 'enp0s4v0', 'enp0s4v1']
+            ['subject-helper', 0, 'ens2', 'ens1'],
+            ['subject-subjectv0', 1, 'ens2', 'ens2v0'],
+            ['subjectv0-helper', 1, 'ens2v0', 'ens1'],
+            ['subjectv0-subject', 1, 'ens2v0', 'ens2'],
+            ['subjectv0-subjectv1', 2, 'ens2v0', 'ens2v1']
           ]
         else
-          cases = [['subject-helper', 0, 'enp0s4', 'enp0s3']]
+          cases = [['subject-helper', 0, 'ens2', 'ens1']]
         end
 
 results = File.join(__dir__, 'var', 'results', Time.now.to_s)

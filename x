@@ -39,15 +39,24 @@ socket.close_on_exec = false
 q.enter(File.join(qemu, 'build', executable), *base, *chardev, *%W[
   -mon chardev=chardev
   -device virtio-iommu
-  -device virtio-net,mac=02:00:00:00:00:#{socket.read(2)},netdev=tap
-  -device virtio-net,mac=02:00:00:01:00:00,netdev=hub0port0
-  -device #{q.argv[0]},mac=02:00:00:01:00:01,netdev=hub0port1
-  -device virtio-net,mac=02:00:00:01:01:00,netdev=hub1port0
-  -device #{q.argv[0]},mac=02:00:00:01:01:01,netdev=hub1port1
-  -device virtio-net,mac=02:00:00:01:02:00,netdev=hub2port0
-  -device #{q.argv[0]},mac=02:00:00:01:02:01,netdev=hub2port1
-  -device virtio-net,mac=02:00:00:01:03:00,netdev=hub3port0
-  -device #{q.argv[0]},mac=02:00:00:01:03:01,netdev=hub3port1
+  -device pcie-root-port,id=port0,slot=0
+  -device pcie-root-port,id=port1,slot=1
+  -device pcie-root-port,id=port2,slot=2
+  -device pcie-root-port,id=port3,slot=3
+  -device pcie-root-port,id=port4,slot=4
+  -device pcie-root-port,id=port5,slot=5
+  -device pcie-root-port,id=port6,slot=6
+  -device pcie-root-port,id=port7,slot=7
+  -device pcie-root-port,id=port8,slot=8
+  -device virtio-net,bus=port0,mac=02:00:00:00:00:#{socket.read(2)},netdev=tap
+  -device virtio-net,bus=port1,mac=02:00:00:01:00:00,netdev=hub0port0
+  -device #{q.argv[0]},bus=port2,mac=02:00:00:01:00:01,netdev=hub0port1
+  -device virtio-net,bus=port3,mac=02:00:00:01:01:00,netdev=hub1port0
+  -device #{q.argv[0]},bus=port4,mac=02:00:00:01:01:01,netdev=hub1port1
+  -device virtio-net,bus=port5,mac=02:00:00:01:02:00,netdev=hub2port0
+  -device #{q.argv[0]},bus=port6,mac=02:00:00:01:02:01,netdev=hub2port1
+  -device virtio-net,bus=port7,mac=02:00:00:01:03:00,netdev=hub3port0
+  -device #{q.argv[0]},bus=port8,mac=02:00:00:01:03:01,netdev=hub3port1
   -drive if=virtio,format=raw,file=#{q.var}/root.img,file.locking=on
   -netdev tap,script=#{q.libexec}/ifup,downscript=no,id=tap
   -netdev hubport,id=hub0port0,hubid=0 -netdev hubport,id=hub0port1,hubid=0
