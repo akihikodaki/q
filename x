@@ -58,7 +58,7 @@ q.enter(File.join(qemu, 'build', executable), *base, *chardev, *%W[
   -device virtio-net,bus=port7,mac=02:00:00:01:03:00,netdev=hub3port0
   -device #{q.argv[0]},bus=port8,mac=02:00:00:01:03:01,netdev=hub3port1
   -drive if=virtio,format=raw,file=#{q.var}/root.img,file.locking=on
-  -netdev tap,script=#{q.libexec}/ifup,downscript=no,id=tap
+  -netdev tap,script=#{q.libexec}/ifup,downscript=no,id=tap,vhost=on
   -netdev hubport,id=hub0port0,hubid=0 -netdev hubport,id=hub0port1,hubid=0
   -netdev hubport,id=hub1port0,hubid=1 -netdev hubport,id=hub1port1,hubid=1
   -netdev hubport,id=hub2port0,hubid=2 -netdev hubport,id=hub2port1,hubid=2
