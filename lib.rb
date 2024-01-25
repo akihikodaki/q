@@ -30,7 +30,7 @@ class Q
 
   def enter(*argv)
     ENV['Q'] = __dir__
-    
+
     exec(*%W[nsenter -m -n -U --preserve-credentials -w#{Dir.pwd} -t], @target,
          *argv)
   end
