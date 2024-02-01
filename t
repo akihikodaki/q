@@ -1,134 +1,97 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-class Daemon
-  D = File.join(__dir__, 'd')
-  E = File.join(__dir__, 'e')
+require 'shellwords'
 
-  attr_reader :pid_s
-
-  def initialize(path)
-    d_read, d_write = IO.pipe
-    @pid = Kernel.spawn(D, d_write.fileno.to_s, pgroup: 0,
-                        out: path, err: :out, d_write.fileno => d_write.fileno)
-    begin
-      @pid_s = @pid.to_s
-      d_write.close
-      d_read.read
-      d_read.close
-    rescue Exception
-      kill
-      raise
-    end
-  end
-
-  def kill
-    Process.kill 'TERM', @pid
-    Process.wait @pid
-  end
-
-  def popen(command, ...)
-    IO.popen([E, '-t', @pid_s, *command], ...)
-  end
-
-  def system(...)
-    super(E, '-t', @pid_s, ...)
-  end
-end
+Dir.chdir __dir__
 
 class Host
   attr_reader :address
 
-  X = File.join(__dir__, 'x')
-
-  def initialize(daemon, path, interface_device, address)
-    @address = address
-    @pid = spawn(X, '-l', path, '-t', daemon.pid_s, interface_device, '-snapshot',
-                 pgroup: 0)
+  def initialize(path, interface_device)
+    @pid = spawn('./x', interface_device,
+                 in: :close, out: path, err: [:child, :out], pgroup: 0)
     begin
       begin
-        daemon.system 'ssh', '-o', 'ConnectTimeout=1', address, exception: true, in: :close
+        system 'mkosi', 'ssh', exception: true, in: :close
       rescue RuntimeError
         sleep 1
         retry
       end
     rescue Exception
-      kill
+      wait
       raise
     end
   end
 
-  def kill
-    Process.kill 'KILL', @pid
+  def poweroff
+    system 'mkosi', 'ssh', 'poweroff', in: :close
+    wait
+  end
+
+  def ssh(command, ...)
+    IO.popen(['mkosi', 'ssh', command], ...)
+  end
+
+  def wait
     Process.wait @pid
   end
 end
 
 cases = if ARGV[0] == 'igb'
           [
-            ['subject-helper', 0, 'ens2', 'ens1'],
-            ['subject-subjectv0', 1, 'ens2', 'ens2v0'],
-            ['subjectv0-helper', 1, 'ens2v0', 'ens1'],
-            ['subjectv0-subject', 1, 'ens2v0', 'ens2'],
-            ['subjectv0-subjectv1', 2, 'ens2v0', 'ens2v1']
+            ['subject-helper', 0, 'ens1', 'ens0'],
+            ['subject-subjectv0', 1, 'ens1', 'ens1v0'],
+            ['subjectv0-helper', 1, 'ens1v0', 'ens0'],
+            ['subjectv0-subject', 1, 'ens1v0', 'ens1'],
+            ['subjectv0-subjectv1', 2, 'ens1v0', 'ens1v1']
           ]
         else
-          cases = [['subject-helper', 0, 'ens2', 'ens1']]
+          cases = [['subject-helper', 0, 'ens1', 'ens0']]
         end
 
-results = File.join(__dir__, 'var', 'results', Time.now.to_s)
+results = File.join('var', 'results', Time.now.to_s)
 Dir.mkdir results
 
-daemon = Daemon.new(File.join(results, 'd.txt'))
-begin
-  cases.each do
-    name, required_vfs, local, remote = _1
-    path = File.join(results, name)
-    Dir.mkdir path
-
-    host = Host.new(daemon, File.join(path, 'x.txt'), ARGV[0], '10.0.2.15')
-    begin
-      File.open File.join(path, 'result.txt'), File::CREAT | File::WRONLY do |file|
-        command = [
-          'ssh', host.address, 'sh', '-s',
-          '--', required_vfs.to_s, local, remote
-        ]
-  
-        daemon.popen command, in: File.join(__dir__, 'libexec', 'test.sh'), err: :out do |io|
-          io.each do |line|
-            puts "#{name}: #{line}"
-            file.write line
-          end
-        end
-      end
-    ensure
-      host.kill
-    end
-  end
-
-  path = File.join(results, 'dts')
+cases.each do
+  name, required_vfs, local, remote = _1
+  path = File.join(results, name)
   Dir.mkdir path
 
-  host = Host.new(daemon, File.join(path, 'x.txt'), ARGV[0], '10.0.2.15')
+  host = Host.new(File.join(path, 'x.txt'), ARGV[0])
   begin
     File.open File.join(path, 'result.txt'), File::CREAT | File::WRONLY do |file|
       command = [
-        'ssh', host.address, '/home/person/dts/dts', '--config-file',
-        'executions/execution_q.cfg'
-      ]
+        'exec', 'sh', '-s', '--', required_vfs.to_s, local, remote
+      ].shelljoin
 
-      daemon.popen command, err: :out do |io|
+      host.ssh command, in: 'test.sh', err: [:child, :out] do |io|
         io.each do |line|
-          puts "dts: #{line}"
+          puts "#{name}: #{line}"
           file.write line
         end
       end
-
-      daemon.system 'scp', '-r', "#{host.address}:/home/person/dts/output", path
     end
   ensure
-    host.kill
+    host.poweroff
+  end
+end
+
+path = File.join(results, 'dts')
+Dir.mkdir path
+
+host = Host.new(File.join(path, 'x.txt'), ARGV[0])
+begin
+  File.open File.join(path, 'result.txt'), File::CREAT | File::WRONLY do |file|
+    command = "cd /mnt/dts && ./main.py --config-file executions/execution_q.cfg --output ../#{path.shellescape}/output"
+
+    host.ssh command, err: [:child, :out] do |io|
+      io.each do |line|
+        puts "dts: #{line}"
+        file.write line
+      end
+    end
   end
 ensure
-  daemon.kill
+  host.poweroff
 end

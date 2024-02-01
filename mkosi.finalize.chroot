@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+chmod 600 /root/.ssh/id_rsa
+ltp/build.sh -i
+pip install -r dts/requirements.txt
+systemctl enable httpd rstatd rusersd telnet.socket vsftpd
