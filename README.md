@@ -30,6 +30,9 @@ cd qemu
 ./configure
 make
 cd ..
+git clone https://gitlab.freedesktop.org/akihiko.odaki/fontconfig
+meson setup fontconfig-build fontconfig
+meson compile -C fontconfig-build
 ```
 
 ### Running

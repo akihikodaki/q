@@ -38,5 +38,6 @@ qemu = %W[
   -numa cpu,node-id=0,socket-id=0 -numa cpu,node-id=1,socket-id=1
 ]
 
-exec({ 'PATH' => "#{__dir__}/var/qemu/build:#{ENV['PATH']}" },
+exec({ 'LD_LIBRARY_PATH' => "#{__dir__}/var/fontconfig-build/src:#{ENV['LD_LIBRARY_PATH']}",
+       'PATH' => "#{__dir__}/var/qemu/build:#{ENV['PATH']}" },
      'mkosi', *mkosi, 'qemu', *qemu, *ARGV[1..])
