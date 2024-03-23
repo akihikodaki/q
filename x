@@ -4,15 +4,13 @@
 require 'etc'
 
 mkosi = if Etc.nprocessors < 18
-          [
-            "--kernel-command-line-extra=isolcpus=#{Etc.nprocessors}-18",
-            '--qemu-smp=18,sockets=2'
-          ]
+          %W[--kernel-command-line-extra=isolcpus=#{Etc.nprocessors}-18]
         else
-          %W[--qemu-smp=#{Etc.nprocessors},sockets=2]
+          []
         end
 
 qemu = %W[
+  -smp #{[Etc.nprocessors, 18].max},sockets=2
   -device virtio-iommu
   -device pcie-root-port,id=port1,slot=1
   -device pcie-root-port,id=port2,slot=2
