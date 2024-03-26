@@ -1,0 +1,18 @@
+#!/bin/bash
+
+exec "$(dirname "${BASH_SOURCE[0]}")/rss-enter" <<'NS'
+mkosi ssh <<SSH &
+ethtool -K ens1f1 rxhash on
+ip link set ens1f1 up
+ip address add 10.0.2.1 dev ens1f1
+ip route add 10.0.2.0 dev ens1f1
+iperf -s
+SSH
+until iperf -c 10.0.2.1 -P 4
+do
+  sleep
+done
+kill $!
+wait
+mkosi ssh ethtool -S ens1f1
+NS

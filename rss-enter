@@ -1,0 +1,4 @@
+#!/bin/bash
+
+d="$(dirname "${BASH_SOURCE[0]}")"
+exec sudo nsenter -t "$(cat "$d/var/pid")" -n --preserve-credentials "$@"

@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+exec('sudo', 'unshare', '--net', File.join(__dir__, 'rss-init'), *ARGV)

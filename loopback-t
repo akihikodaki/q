@@ -9,7 +9,7 @@ class Host
   attr_reader :address
 
   def initialize(path, interface_device)
-    @pid = spawn('./x', interface_device,
+    @pid = spawn('./loopback-x', interface_device,
                  in: :close, out: path, err: [:child, :out], pgroup: 0)
     begin
       begin
