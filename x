@@ -18,6 +18,5 @@ qemu = %W[
 
 exec({
        'ASAN_OPTIONS' => 'abort_on_error=1',
-       'LD_LIBRARY_PATH' => "#{__dir__}/var/fontconfig-build/src:#{ENV['LD_LIBRARY_PATH']}",
-       'PATH' => "#{__dir__}/var/qemu/build:#{ENV['PATH']}"
+       'LD_LIBRARY_PATH' => "#{__dir__}/var/fontconfig-build/src:#{ENV['LD_LIBRARY_PATH']}"
      }, 'mkosi', *mkosi, 'qemu', *qemu, *ARGV)
