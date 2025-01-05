@@ -1,6 +1,6 @@
-[submodule "dts"]
-	path = dts
-	url = ../dts.git
+[submodule "dpdk"]
+	path = dpdk
+	url = ../../DPDK/dpdk.git
 [submodule "ltp"]
 	path = ltp
 	url = ../../linux-test-project/ltp.git

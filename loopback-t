@@ -11,26 +11,14 @@ class Host
   def initialize(path, interface_device)
     @pid = spawn('./loopback-x', interface_device,
                  in: :close, out: path, err: [:child, :out], pgroup: 0)
-    begin
-      begin
-        system 'mkosi', 'ssh', exception: true, in: :close
-      rescue RuntimeError
-        sleep 1
-        retry
-      end
-    rescue Exception
-      wait
-      raise
-    end
   end
 
-  def poweroff
-    system 'mkosi', 'ssh', 'poweroff', in: :close
-    wait
-  end
-
-  def ssh(command, ...)
+  def open_ssh(command, ...)
     IO.popen(['mkosi', 'ssh', command], ...)
+  end
+
+  def ssh(...)
+    system('mkosi', 'ssh', ...)
   end
 
   def wait
@@ -40,58 +28,48 @@ end
 
 cases = if ARGV[0] == 'igb'
           [
-            ['subject-helper', 0, 'ens2', 'ens1f1'],
-            ['subject-subjectv0', 1, 'ens2', 'ens2v0'],
-            ['subjectv0-helper', 1, 'ens2v0', 'ens1f1'],
-            ['subjectv0-subject', 1, 'ens2v0', 'ens2'],
-            ['subjectv0-subjectv1', 2, 'ens2v0', 'ens2v1']
+            ['subject-helper', '/mnt/ltp.sh 0 ens2 ens1f0'],
+            ['subject-subjectv0', '/mnt/ltp.sh 1 ens2 ens2v0'],
+            ['subjectv0-helper', '/mnt/ltp.sh 1 ens2v0 ens1f0'],
+            ['subjectv0-subject', '/mnt/ltp.sh 1 ens2v0 ens2'],
+            ['subjectv0-subjectv1', '/mnt/ltp.sh 2 ens2v0 ens2v1'],
+            ['dts', '/mnt/dts.sh']
           ]
         else
-          cases = [['subject-helper', 0, 'ens2', 'ens1f1']]
+          [['subject-helper', '/mnt/ltp.sh 0 ens2 ens1f0']]
         end
 
 results = File.join('var', 'results', Time.now.to_s)
 Dir.mkdir results
 
 cases.each do
-  name, required_vfs, local, remote = _1
+  name, command = _1
   path = File.join(results, name)
   Dir.mkdir path
 
   host = Host.new(File.join(path, 'x.txt'), ARGV[0])
   begin
-    File.open File.join(path, 'result.txt'), File::CREAT | File::WRONLY do |file|
-      command = [
-        'exec', 'sh', '-s', '--', required_vfs.to_s, local, remote
-      ].shelljoin
+    begin
+      host.ssh exception: true, in: :close
+    rescue RuntimeError
+      sleep 1
+      retry
+    end
 
-      host.ssh command, in: 'test.sh', err: [:child, :out] do |io|
-        io.each do |line|
-          puts "#{name}: #{line}"
-          file.write line
+    begin
+      result = File.join(path, 'result.txt')
+      File.open result, File::CREAT | File::WRONLY do |file|
+        host.open_ssh "#{command} #{path}", err: [:child, :out] do |io|
+          io.each do |line|
+            puts "#{name}: #{line}"
+            file.write line
+          end
         end
       end
+    ensure
+      host.ssh 'poweroff', in: :close
     end
   ensure
-    host.poweroff
+    host.wait
   end
-end
-
-path = File.join(results, 'dts')
-Dir.mkdir path
-
-host = Host.new(File.join(path, 'x.txt'), ARGV[0])
-begin
-  File.open File.join(path, 'result.txt'), File::CREAT | File::WRONLY do |file|
-    command = "cd /mnt/dts && ./main.py --config-file executions/execution_q.cfg --output ../#{path.shellescape}/output"
-
-    host.ssh command, err: [:child, :out] do |io|
-      io.each do |line|
-        puts "dts: #{line}"
-        file.write line
-      end
-    end
-  end
-ensure
-  host.poweroff
 end

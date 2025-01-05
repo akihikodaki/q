@@ -37,7 +37,7 @@ meson compile -C fontconfig-build
 
 ### Running
 
-Run `./t igb`
+Run `./loopback-t igb`
 
 ### Notes on t
 

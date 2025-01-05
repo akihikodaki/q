@@ -1,0 +1,60 @@
+test_runs:
+  - dpdk_build:
+      dpdk_location:
+        dpdk_tree: /mnt/dpdk
+        remote: true
+      precompiled_build_dir: /mnt/var/dpdk
+    perf: true
+    func: true
+    skip_smoke_tests: true
+    test_suites:
+      - blocklist
+      - checksum_offload
+      - dynamic_queue_conf
+      - hello_world
+      - l2fwd
+      - mac_filter
+      - pmd_buffer_scatter
+      - vlan
+    system_under_test_node:
+      node_name: "SUT 1"
+    traffic_generator_node: "TG 1"
+nodes:
+  - name: "SUT 1"
+    hostname: localhost
+    user: root
+    password: password
+    arch: arm64
+    os: linux
+    lcores: ""
+    ports:
+      - pci: "0000:02:00.0"
+        os_driver_for_dpdk: vfio-pci
+        os_driver: igb
+        peer_node: "TG 1"
+        peer_pci: "0000:01:00.0"
+      - pci: "0000:03:00.0"
+        os_driver_for_dpdk: vfio-pci
+        os_driver: igb
+        peer_node: "TG 1"
+        peer_pci: "0000:01:00.1"
+  - name: "TG 1"
+    hostname: localhost
+    user: root
+    password: password
+    arch: arm64
+    os: linux
+    lcores: ""
+    ports:
+      - pci: "0000:01:00.0"
+        os_driver_for_dpdk: vfio-pci
+        os_driver: vmxnet3
+        peer_node: "SUT 1"
+        peer_pci: "0000:02:00.0"
+      - pci: "0000:01:00.1"
+        os_driver_for_dpdk: vfio-pci
+        os_driver: vmxnet3
+        peer_node: "SUT 1"
+        peer_pci: "0000:03:00.0"
+    traffic_generator:
+      type: SCAPY

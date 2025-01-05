@@ -1,1 +1,1 @@
-PATH="/usr/lib64/ccache:$PATH:/ltp-install/testcases/bin"
+PATH="$PATH:/ltp-install/testcases/bin"
