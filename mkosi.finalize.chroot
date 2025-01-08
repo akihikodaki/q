@@ -7,4 +7,3 @@ python3.10 -m pip install --no-warn-script-location scapy==2.5.0
 poetry config virtualenvs.in-project true
 poetry env use -C dpdk/dts 3.10
 poetry install -C dpdk/dts --no-root --only main
-systemctl enable httpd rstatd rusersd telnet.socket vsftpd

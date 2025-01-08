@@ -33,4 +33,5 @@ until ip route add fd00:1:1:1::2 src fd00:1:1:1::1 dev "$3"
 do
   sleep 1
 done
+systemctl start httpd rstatd rusersd telnet.socket vsftpd
 PASSWD=password RHOST=10.0.0.1 RHOST_IFACES="$3" ./network.sh -6mta
