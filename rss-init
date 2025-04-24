@@ -1,9 +1,27 @@
 #!/bin/bash
 
 d="$(dirname "${BASH_SOURCE[0]}")"
-ip tuntap add mode tap multi_queue
-ip link set tap0 up
-ip address add 10.0.2.0 dev tap0
-ip route add 10.0.2.1 dev tap0
+
+case "$1" in
+  tap)
+    ip tuntap add mode tap multi_queue
+    host=tap0
+    guest=tap0;;
+  macvtap)
+    ip link add veth_host type veth peer name veth_guest
+    ip link set veth_host up
+    ip link set veth_guest up
+    ip link add link macvtap0 link veth_guest type macvtap
+    host=veth_host
+    guest=macvtap0;;
+  *)
+    echo "Usage: $0 <tap|macvtap> [DEVICE [NETDEV [QEMU]]]" >&2
+    exit 1;;
+esac
+
+ip link set lo up
+ip link set $guest address 02:00:00:01:00:00 mtu 1486 up
+ip address add 10.0.2.0 dev $host
+ip route add 10.0.2.1 dev $host
 echo $$ > "$d/var/pid"
-exec "$d/x" -snapshot -device virtio-net,bus=port1,netdev=n,rss=on -netdev tap,id=n,ifname=tap0,queues=4,script=no,downscript=no,vhost=on "$@"
+exec "$d/x" -snapshot -device "virtio-net-pci,bus=port1,mac=02:00:00:01:00:00,netdev=n,rss=on,$2" -netdev "tap,id=n,ifname=$guest,queues=4,script=no,downscript=no,$3" "${@:4}"
