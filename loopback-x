@@ -4,7 +4,7 @@
 require 'etc'
 
 qemu = %W[
-  -device virtio-iommu,granule=4k
+  -M iommu=smmuv3
   -device pcie-root-port,id=port2,slot=2
   -device pcie-root-port,id=port3,slot=3
   -device vmxnet3,bus=port1,mac=02:00:00:01:00:00,multifunction=on,netdev=hub0port0
